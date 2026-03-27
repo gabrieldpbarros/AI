@@ -12,7 +12,7 @@ class Wumpus:
 
     def cria_wumpus(self, tabuleiro):
         # Atualiza o tabuleiro com o novo wumpus
-        tabuleiro.tab[self.y][self.x] = "W"
+        tabuleiro.tab[self.y][self.x] += "W"
 
         # Encontra os limites do tabuleiro
         x_max = tabuleiro.c

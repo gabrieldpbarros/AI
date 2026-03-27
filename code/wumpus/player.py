@@ -7,32 +7,35 @@ ROSA_DOS_VENTOS = {
 }
 
 class Jogador:
-    def __init__(self, pos_y):
+    def __init__(self, pos_y, qtd_wumpus):
         self.x = 0
         self.y = pos_y
         self.curr = 0
         self.direction = 'R'
         self.dir_index = 0
         self.state = "vivo"
+        self.qtd_flechas = qtd_wumpus
         self.percepcao = None
 
     def _formata_texto(self, string: str) -> str:
         texto = " percebe"
         temp = string.split(" ")
-        aux = temp.replace("a", "") # removemos o "a" de "uma" para ser contabilizado
+        #print(f"TEMP: {temp}")
+        aux = string.replace("a", "") # removemos o "a" de "uma" para ser contabilizado
+        aux = aux.split(" ")
         # Encontra a quantidade de percepções
-        contador = temp.count("um")
+        contador = aux.count("um")
         if (contador == 1):
-            return texto + " " + string
+            return texto + string + "."
         elif (contador == 2):
-            primeira_parte = " " + temp[0] + " " + temp[1]
-            segunda_parte = " e " + temp[2] + " " + temp[3]
-            return texto + primeira_parte + segunda_parte
+            primeira_parte = " " + temp[1] + " " + temp[2]
+            segunda_parte = " e " + temp[3] + " " + temp[4]
+            return texto + primeira_parte + segunda_parte + "."
         else:
-            primeira_parte = " " + temp[0] + " " + temp[1]
-            segunda_parte = ", " + temp[2] + " " + temp[3]
-            terceira_parte = " e " + temp[2] + " " + temp[3]
-            return texto + primeira_parte + segunda_parte + terceira_parte
+            primeira_parte = " " + temp[1] + " " + temp[2]
+            segunda_parte = ", " + temp[3] + " " + temp[4]
+            terceira_parte = " e " + temp[5] + " " + temp[6]
+            return texto + primeira_parte + segunda_parte + terceira_parte + "."
 
     def _checa_estado(self, tabuleiro) -> str:
         x = self.x
@@ -55,27 +58,29 @@ class Jogador:
         extra_string = ""
         # Fedor
         if (tab_state.find("F") != -1):
-            extra_string += "um fedor"
+            extra_string += " um fedor"
         # Brisa
         if (tab_state.find("B") != -1):
             extra_string += " uma brisa"
         # Ouro
-        if (tab_state.find("O") != -1):
+        if (tab_state.find("T") != -1):
             extra_string += " um brilho"
         # ------------------------------------------------------------------------------------
         if extra_string == "":
             return " não percebe nada."
         else:
             extra_string = self._formata_texto(extra_string)
+            return extra_string
 
     def mostra_percepcao(self, tabuleiro) -> str:
         # Checa se o compartimento não contém perigos
         self.percepcao = self._checa_estado(tabuleiro)
+        #print(f"PERCEPCAO: {self.percepcao}")
         if (self.state == "morto"):
                 return self.percepcao
         else:
             pos_x_convertida = self.x + 1
-            pos_y_convertida = self.y - tabuleiro.h + 2
+            pos_y_convertida = tabuleiro.h - self.y
             string_posicao = f"Você está na posição [{pos_x_convertida},{pos_y_convertida}] e"
             return string_posicao + self.percepcao
         
@@ -95,13 +100,13 @@ class Jogador:
         if (y == tabuleiro.h or y == -1 or x == tabuleiro.c or x == -1):
             print("Você bate na parede e sente um choque.")
         else:
-            # Atualiza o tabuleiro
-            tabuleiro.tab[self.y][self.x] = tabuleiro.tab[self.y][self.x].replace("A", "")
+            # Atualiza os tabuleiros
+            old_x = 0 + self.x
+            old_y = 0 + self.y
             self.x = x
             self.y = y
             self.curr -= 1
-            tabuleiro.tab[self.y][self.x] = "A" + tabuleiro.tab[self.y][self.x]
-            tabuleiro.tab_conhecido[self.y][self.x] = tabuleiro.tab[self.y][self.x]
+            tabuleiro.atualiza_tabuleiros(old_x, old_y, self.x, self.y)
             
     def virar(self, direcao: str) -> str:
         index = self.dir_index

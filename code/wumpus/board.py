@@ -23,10 +23,16 @@ class Tabuleiro:
         # Eventos
         self.qtd_abismos = round(ABISMOS * self.area)
         self.qtd_wumpus = round(WUMPUS * self.area)
+        print(f"ABISMOS = {self.qtd_abismos}\nWUMPUS = {self.qtd_wumpus}")
         self.total_eventos = self.qtd_abismos + self.qtd_wumpus + 1 # tesouro também é um "evento"
         self.abismos = []
         self.wumpus = []
         self.tesouro = None
+
+    # Método para debug
+    def _imprime_tabuleiro(self):
+        for i in range(self.h):
+            print(self.tab[i])
 
     # Método interno
     def _sorteia_posicoes(self):
@@ -37,28 +43,30 @@ class Tabuleiro:
         total_eventos = self.total_eventos
 
         for _ in range(total_eventos):
-            rand_x = random.randint(0, self.comprimento)
-            rand_y = random.randint(0, self.altura)
+            rand_x = random.randint(0, self.c - 1)
+            rand_y = random.randint(0, self.h - 1)
             # Evita a criação de eventos ao redor do spawn do player
             while (rand_x <= 1 and rand_y >= y_prox):
-                rnd_add = random.randint(1, 2)
-                if rnd_add == 1:
-                    rand_x = random.randint(0, self.comprimento)
+                rnd_change = random.randint(1, 2)
+                if rnd_change == 1:
+                    rand_x = random.randint(2, self.c - 1)
                 else:
-                    rand_y = random.randint(0, self.altura)
+                    rand_y = random.randint(2, self.h - 1)
             # Evita a criação de eventos em posições já sorteadas
             while([rand_y, rand_x] in posicoes_eventos):
-                rnd_add = random.randint(1, 2)
-                if rnd_add == 1:
-                    rand_x = random.randint(0, self.comprimento)
+                rnd_change = random.randint(1, 2)
+                if rnd_change == 1:
+                    rand_x = random.randint(0, self.c - 1)
                 else:
-                    rand_y = random.randint(0, self.altura)
+                    rand_y = random.randint(0, self.h - 1)
 
             posicoes_eventos.append([rand_y, rand_x])
 
         return posicoes_eventos
 
     def cria_tabuleiro(self):
+        self.tab[self.c - 1][0] = "A"
+        self.tab_conhecido[self.c - 1][0] = "A"
         posicoes = self._sorteia_posicoes()
 
         # Cria os abismos
@@ -68,7 +76,7 @@ class Tabuleiro:
             new_abismo = Abismo(x, y)
             self.abismos.append(new_abismo)
             # Atualiza o tabuleiro
-            new_abismo.cria_abismo(self.tab)
+            new_abismo.cria_abismo(self)
             # Remove a posição do vetor de posições
             posicoes.pop(i)
         
@@ -79,7 +87,7 @@ class Tabuleiro:
             new_wumpus = Wumpus(x, y)
             self.wumpus.append(new_wumpus)
             # Atualiza o tabuleiro
-            new_wumpus.cria_wumpus(self.tab)
+            new_wumpus.cria_wumpus(self)
             # Remove a posição do vetor de posições
             posicoes.pop(i)
 
@@ -88,10 +96,28 @@ class Tabuleiro:
         y = posicoes[0][0]
         self.tesouro = Ouro(x, y)
         # Atualiza o tabuleiro
-        self.tab = self.tesouro.cria_tesouro(self.tab)
+        self.tesouro.cria_tesouro(self)
         # Limpa o vetor
         posicoes.clear()
 
     def mostra_tabuleiro_conhecido(self):
         for i in range(self.h):
             print(self.tab_conhecido[i])
+
+    def atualiza_tabuleiros(self, old_x: int, old_y: int, new_x: int, new_y: int):
+        self.tab[old_y][old_x] = self.tab[old_y][old_x].replace("A", "")
+        self.tab_conhecido[old_y][old_x] = self.tab_conhecido[old_y][old_x].replace("A", self.tab[old_y][old_x])
+
+        self.tab[new_y][new_x] = "A" + self.tab[new_y][new_x]
+        self.tab_conhecido[new_y][new_x] = "A"
+
+    def reinicia_tabuleiro(self, jogador):
+        # Reinicia o tabuleiro
+        self.tab[self.c - 1][0] = "A"
+        self.tab[jogador.y][jogador.x] = self.tab[jogador.y][jogador.x].replace("A", "")
+        self.tab_conhecido = self.tab_conhecido = [["?"] * self.c for _ in range(self.h)]
+        self.tab_conhecido[self.c - 1][0] = "A"
+        # Reinicia o tesouro
+        self.tesouro.estado = "solto"
+        # Zera o jogador
+        jogador = None
