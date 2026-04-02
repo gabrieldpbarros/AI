@@ -5,6 +5,9 @@ ROSA_DOS_VENTOS = {
     'L': "Oeste",
     'D': "Sul"
 }
+TESOURO_E_SAIDA = 1
+TESOURO_APENAS = 2
+NADA = 3
 
 class Jogador:
     def __init__(self, pos_y, qtd_wumpus):
@@ -84,7 +87,7 @@ class Jogador:
             string_posicao = f"Você está na posição [{pos_x_convertida},{pos_y_convertida}] e"
             return string_posicao + self.percepcao
         
-    def andar(self, tabuleiro):
+    def andar(self, tabuleiro) -> None:
         x = self.x
         y = self.y
 
@@ -127,6 +130,116 @@ class Jogador:
         self.direction = DIRECOES[index]
 
         return f"Você vira para a {direcao} e encara o {ROSA_DOS_VENTOS[self.direction]}"
+    
+    def atirar_flecha(self, tabuleiro):
+        self.qtd_flechas -= 1
+        self.curr -= 1
+        initial_str = "Você atira sua flecha e perde 1 ponto"
+        x = 0 + self.x
+        y = 0 + self.y
+
+        if self.direction == 'R' or self.direction == 'L':
+            if self.direction == 'R':
+                while (x < tabuleiro.c):
+                    x += 1
+                    current_pos = tabuleiro.tab[y][x]
+                    # Reutilizando a lógica de retirar o tesouro
+                    aux_split = current_pos.split("W")
+                    aux_split = aux_split.pop(0)
+                    if (aux_split != []):
+                        initial_str += ", mas acerta um Wumpus!"
+                        print(initial_str)
+
+                        # Variável auxiliar para facilitar a lógica do loop
+                        dead = 0
+                        index = 0
+                        while (not dead):
+                            wumpus = tabuleiro.wumpus[index]
+                            if (wumpus.x == x and wumpus.y == y):
+                                print(wumpus.acerta_wumpus(tabuleiro, self))
+                                dead = 1
+                            else:
+                                index += 1
+                        return
+            else:
+                while (x >= 0):
+                    x -= 1
+                    current_pos = tabuleiro.tab[y][x]
+                    aux_split = current_pos.split("W")
+                    aux_split = aux_split.pop(0)
+                    if (aux_split != []):
+                        initial_str += ", mas acerta um Wumpus!"
+                        print(initial_str)
+
+                        # Variável auxiliar para facilitar a lógica do loop
+                        dead = 0
+                        index = 0
+                        while (not dead):
+                            wumpus = tabuleiro.wumpus[index]
+                            if (wumpus.x == x and wumpus.y == y and wumpus.estado == "vivo"):
+                                print(wumpus.acerta_wumpus(tabuleiro, self))
+                                dead = 1
+                            else:
+                                index += 1
+                        return           
+        else:
+            if self.direction == 'U':
+                while (y >= 0):
+                    y -= 1
+                    current_pos = tabuleiro.tab[y][x]
+                    # Reutilizando a lógica de retirar o tesouro
+                    aux_split = current_pos.split("W")
+                    aux_split = aux_split.pop(0)
+                    if (aux_split != []):
+                        initial_str += ", mas acerta um Wumpus!"
+                        print(initial_str)
+
+                        # Variável auxiliar para facilitar a lógica do loop
+                        dead = 0
+                        index = 0
+                        while (not dead):
+                            wumpus = tabuleiro.wumpus[index]
+                            if (wumpus.x == x and wumpus.y == y):
+                                print(wumpus.acerta_wumpus(tabuleiro, self))
+                                dead = 1
+                            else:
+                                index += 1
+                        return
+            else:
+                while (y < tabuleiro.h):
+                    y += 1
+                    current_pos = tabuleiro.tab[y][x]
+                    aux_split = current_pos.split("W")
+                    aux_split = aux_split.pop(0)
+                    if (aux_split != []):
+                        initial_str += ", mas acerta um Wumpus!"
+                        print(initial_str)
+
+                        # Variável auxiliar para facilitar a lógica do loop
+                        dead = 0
+                        index = 0
+                        while (not dead):
+                            wumpus = tabuleiro.wumpus[index]
+                            if (wumpus.x == x and wumpus.y == y and wumpus.estado == "vivo"):
+                                print(wumpus.acerta_wumpus(tabuleiro, self))
+                                dead = 1
+                            else:
+                                index += 1
+                        return
+        initial_str += ", acertando apenas a parede."
+        print(initial_str)
 
     def pegar_ouro(self, tabuleiro) -> str:
         return tabuleiro.tesouro.checa_encontrado(tabuleiro, self)
+    
+    def sai_caverna(self, tabuleiro) -> int:
+        if (tabuleiro.tesouro.estado == "coletado"):
+            # PRIMEIRO CASO: Tesouro coletado e jogador na saída
+            if (self.x == 0 and self.y == (tabuleiro.h - 1)):
+                return TESOURO_E_SAIDA
+            # SEGUNDO CASO: Tesouro coletado, mas jogador em outra posição
+            else:
+                return TESOURO_APENAS
+        # TERCEIRO CASO: Nenhuma das condições cumpridas
+        else:
+            return NADA

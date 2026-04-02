@@ -23,7 +23,6 @@ class Tabuleiro:
         # Eventos
         self.qtd_abismos = round(ABISMOS * self.area)
         self.qtd_wumpus = round(WUMPUS * self.area)
-        print(f"ABISMOS = {self.qtd_abismos}\nWUMPUS = {self.qtd_wumpus}")
         self.total_eventos = self.qtd_abismos + self.qtd_wumpus + 1 # tesouro também é um "evento"
         self.abismos = []
         self.wumpus = []

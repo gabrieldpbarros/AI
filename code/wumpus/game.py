@@ -9,6 +9,8 @@ ACOES = [
     "[5] Pegar ouro",
     "[6] Sair da caverna"
 ]
+TESOURO_E_SAIDA = 1
+TESOURO_APENAS = 2
 
 class Jogo:
     def __init__(self, altura: int, comprimento: int):
@@ -34,17 +36,24 @@ class Jogo:
         elif acao == 2:
             print(self.jogador.virar('direita'))
         elif acao == 3:
-            print(self.jogador.andar(self.tabuleiro))
+            self.jogador.andar(self.tabuleiro)
         elif acao == 4:
-            pass
+            self.jogador.atirar_flecha(self.tabuleiro)
         elif acao == 5:
             print(self.jogador.pegar_ouro(self.tabuleiro))
         else:
-            pass
+            saida = self.jogador.sai_caverna(self.tabuleiro)
+            if (saida == TESOURO_E_SAIDA):
+                print("Parabéns! Você conseguiu escapar vivo!")
+                self._finaliza_jogo()
+            elif (saida == TESOURO_APENAS):
+                print("Você precisa voltar à entrada da caverna [1,1] para sair.")
+            else:
+                print("Você ainda não encontrou o tesouro, não pode sair de mãos vazias!")
 
     def comeca_jogo(self):
         self.estado = "iniciado"
-        self.tabuleiro._imprime_tabuleiro()
+        #self.tabuleiro._imprime_tabuleiro()
         print("BEM-VINDO AO MUNDO DO WUMPUS!")
         print("Seu objetivo é encontrar o tesouro escondido nesta caverna.")
         print("Tome cuidado com os Wumpus e abismos que a caverna abriga!")
@@ -77,5 +86,5 @@ class Jogo:
             exit(0)
 
 
-new_game = Jogo(10, 10)
+new_game = Jogo(4, 4)
 new_game.comeca_jogo()
