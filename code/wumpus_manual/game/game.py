@@ -1,5 +1,5 @@
-from board import Tabuleiro
-from player import Jogador
+from game.board import Tabuleiro
+from game.player import Jogador
 
 ACOES = [
     "[1] Virar para a esquerda",
@@ -27,8 +27,9 @@ class Jogo:
         print(f"Pontuação final: {self.jogador.curr}")
 
     def _acao(self, acao: int):
-        if acao not in [0, 1, 2, 3, 4, 5, 6]:
+        if acao not in [1, 2, 3, 4, 5, 6]:
             print("Insira uma ação válida.")
+            return
 
         self.qtd_acoes += 1
         if acao == 1:
@@ -41,7 +42,7 @@ class Jogo:
             self.jogador.atirar_flecha(self.tabuleiro)
         elif acao == 5:
             print(self.jogador.pegar_ouro(self.tabuleiro))
-        else:
+        elif acao == 6:
             saida = self.jogador.sai_caverna(self.tabuleiro)
             if (saida == TESOURO_E_SAIDA):
                 print("Parabéns! Você conseguiu escapar vivo!")
@@ -74,9 +75,9 @@ class Jogo:
             self._acao(acao)
         
         entrada = input("\nDeseja começar um novo jogo (S/N)?\n")
-        while(entrada not in ['S', 'N']):
+        while(entrada not in ['S', 'N', 's', 'n']):
             entrada = input("Insira uma resposta válida (S/N): ")
-        if (entrada == 'S'):
+        if (entrada == 'S' or entrada == 's'):
             self.tabuleiro.reinicia_tabuleiro(self.jogador)
             # Cria novo jogador
             self.jogador = Jogador(self.tabuleiro.h - 1, self.tabuleiro.qtd_wumpus)
@@ -84,7 +85,3 @@ class Jogo:
         else:
             print("Encerrando sessão.")
             exit(0)
-
-
-new_game = Jogo(4, 4)
-new_game.comeca_jogo()

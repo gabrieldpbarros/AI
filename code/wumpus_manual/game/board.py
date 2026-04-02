@@ -1,7 +1,7 @@
 import random
-from gold import Ouro
-from pit import Abismo
-from wumpus import Wumpus
+from game.gold import Ouro
+from game.pit import Abismo
+from game.wumpus import Wumpus
 
 # FORMULAS
 ABISMOS = 3 / 16
