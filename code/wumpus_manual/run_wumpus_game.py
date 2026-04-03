@@ -1,6 +1,6 @@
 from game.game import Jogo
 
-def start_game(altura: int, comprimento: 4):
+def start_game(altura: int, comprimento: int):
     jogo = Jogo(altura, comprimento)
     jogo.comeca_jogo()
 
