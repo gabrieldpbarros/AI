@@ -49,10 +49,35 @@ class LLMAgent:
             prompt += json.dumps(tools_dict, indent=4, ensure_ascii=False)
             prompt += "\n\n"
 
-        # Terceia parte do prompt
+        # Terceira parte do prompt
         with open(prompt_p2_path, "r") as arquivo:
             prompt += arquivo.read()
 
         return prompt
 
+    def _andar(self, direcao: str):
+        pass
+
+    def _atirar(self, direcao: str):
+        pass
+
+    def _pegar_ouro(self):
+        pass
+
+    def _escalar_saida(self):
+        pass
+
     def _call_tool(self, response: str) -> str:
+        tool_call = json.loads(response.split("Action:")[1])
+        kwargs = tool_call["action_input"]
+        match tool_call["action"]:
+            case "andar":
+                return self._andar(**kwargs)
+            case "atirar":
+                return self._atirar()
+            case "pegar_ouro":
+                return self._pegar_ouro(**kwargs)
+            case "escalar_saida":
+                return self._escalar_saida(**kwargs)
+            case _:
+                return f'A ferramenta "{tool_call["action"]}" não existe. Confirme as funções disponíveis.'
