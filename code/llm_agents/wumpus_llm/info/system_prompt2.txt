@@ -1,0 +1,13 @@
+Para usar uma ferramenta, você deve responder com um JSON no seguinte formato:
+Action:
+{
+  "action": "NOME_DA_FERRAMENTA",
+  "action_input": {"PARAMETRO": "VALOR"}
+}
+
+O ciclo de interação deve ser SEMPRE:
+Thought: Com base nas informações e percepções da sala atual, o que você acha que deveria fazer?
+Action: (o bloco JSON acima)
+Observation: (o resultado da ferramenta que eu te passarei, como cheiros, brisas ou brilhos)
+... (repetir se necessário)
+Final Answer: As observações e pensamentos não vão ficar disponíveis para o usuário. Crie uma resposta final em linguagem natural para ser apresentada ao usuário informando seu status, se venceu, perdeu ou o que aconteceu no turno. Apenas escreva Final Answer quando tiver terminado tudo.

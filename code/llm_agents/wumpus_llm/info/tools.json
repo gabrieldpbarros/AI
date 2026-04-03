@@ -1,0 +1,46 @@
+{
+    "andar": {
+        "tool_name": "andar",
+        "description": "Move o jogador para uma sala adjacente.",
+        "input": "ARGS:\n - direcao (str): Direção para onde deseja andar ('Norte', 'Sul', 'Leste', 'Oeste').",
+        "output": "str: Direção para onde o jogador andou.",
+        "example": {
+            "action": "andar",
+            "action_input": {"direcao": "Norte"}
+        },
+        "answer": "Andei na direção Norte."
+    },
+    "atirar": {
+        "tool_name": "atirar",
+        "description": "Dispara uma das suas flechas em uma direção para tentar matar o Wumpus.",
+        "input": "ARGS:\n - direcao (string): Direção para onde deseja atirar ('Norte', 'Sul', 'Leste', 'Oeste').",
+        "output": "str: Resultado do tiro, podendo ser uma parede ou o wumpus.",
+        "example": {
+            "action": "atirar",
+            "action_input": {"direcao": "Leste"}
+        },
+        "answer": "Atirei minha flecha para o Leste, mas não consegui acertar um Wumpus."
+    },
+    "pegar_ouro": {
+        "tool_name": "pegar_ouro",
+        "description": "Tenta coletar o ouro se ele estiver na sala atual. Caso contrário, gasta uma ação em vão.",
+        "input": "",
+        "output": "str: Se na casa com ouro, coleta o ouro, caso contrário, gasta uma ação.",
+        "example": {
+            "action": "pegar_ouro",
+            "action_input": {}
+        },
+        "answer": "Encontrei o ouro e o peguei."
+    },
+    "escalar_saida": {
+        "tool_name": "escalar_saida",
+        "description": "Tenta sair da caverna para vencer o jogo.",
+        "input": "",
+        "output": "str: Resultado da tentativa de sair.",
+        "example": {
+            "action": "escalar_saida",
+            "action_input": {}
+        },
+        "answer": "Tentei sair da caverna, mas ainda preciso encontrar o ouro."
+    }
+}
