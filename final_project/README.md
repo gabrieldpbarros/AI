@@ -7,4 +7,5 @@
 
 > [!NOTE]
 > Este projeto é um refinamento de um projeto da UC de Redes Neurais.
+>
 > Link do repositório: https://github.com/gabrieldpbarros/Artificial-Neural-Networks/tree/main/Projeto_Final
