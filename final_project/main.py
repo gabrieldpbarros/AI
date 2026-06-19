@@ -1,24 +1,23 @@
 import os
 import torch
-import torch.optim as optim
 
 from torch import nn
-from models.simple_cnn import cnnModel
-from utils.load_data import getDataLoaders
-from utils.view_loss import plotLosses, plotCMatrix
+from final_project.src.models.simple_cnn import cnnModel
 
 EPOCHS = 30
 DEVICE = "cuda"
 PATH = "db/"
+SIMPLE_CNN_PATH = "src/models/best_simple_cnn_model.pth"
+COMPLEX_CNN_PATH = "src/models/best_complete_cnn_model.pth"
 
-def mainPipeline(device, db_path):
-    os.makedirs("models", exist_ok=True)
-    os.makedirs("assets", exist_ok=True)
-    train_loader, val_loader, test_loader = getDataLoaders(db_path)
+def trainingPipeline(device, db_path):
+    from final_project.src.utils.load_data import getTrainingDataLoaders
+    train_loader, val_loader, test_loader = getTrainingDataLoaders(db_path)
 
     simpleModel = cnnModel(
         device=device,
-        filters_list=[32, 64]
+        filters_list=[32, 64],
+        best_model_path=SIMPLE_CNN_PATH
     )
 
     completeModel = cnnModel(
@@ -26,9 +25,11 @@ def mainPipeline(device, db_path):
         filters_list=[32, 64, 128],
         dropout=True,
         batch_norm=True,
-        GAP=True
+        GAP=True,
+        best_model_path=COMPLEX_CNN_PATH
     )
 
+    import torch.optim as optim
     optimizer_simple = optim.Adam(simpleModel.model.parameters(), lr=0.001)
     optimizer_complete = optim.Adam(completeModel.model.parameters(), lr=0.0001)
     loss_fn = nn.CrossEntropyLoss()
@@ -45,18 +46,19 @@ def mainPipeline(device, db_path):
 
         if simpleModel.val_loss[-1] < best_simple_val_loss:
             best_simple_val_loss = simpleModel.val_loss[-1]
-            simpleModel.saveCeckpoint("models/best_simple_cnn_model.pth")
+            simpleModel.saveCeckpoint()
             print(f"Epoch {epoch+1}: Melhor modelo (simples) salvo! (Val Loss: {best_simple_val_loss:.4f})")
 
         if completeModel.val_loss[-1] < best_complete_val_loss:
             best_complete_val_loss = completeModel.val_loss[-1]
-            completeModel.saveCheckpoint("models/best_complete_cnn_model.pth")
+            completeModel.saveCheckpoint()
             print(f"Epoch {epoch+1}: Melhor modelo (completo) salvo! (Val Loss: {best_complete_val_loss:.4f})")
 
         if (epoch+1) % 5 == 0:
             print(f"Epoch {epoch+1}/{EPOCHS} | Simple Train Loss: {simpleModel.train_loss[epoch]:.4f} | Simple Val Loss: {simpleModel.val_loss[epoch]:.4f}")
             print(f"Epoch {epoch+1}/{EPOCHS} | Complete Train Loss: {completeModel.train_loss[epoch]:.4f} | Complete Val Loss: {completeModel.val_loss[epoch]:.4f}")
 
+    from final_project.src.utils.view_loss import plotLosses, plotCMatrix
     plotLosses(
         "Modelo Simples",
         simpleModel.train_loss,
@@ -77,7 +79,7 @@ def mainPipeline(device, db_path):
         "assets/Complete_CNN_Losses.png"
     )
 
-    simpleModel.model.load_state_dict(torch.load("models/best_simple_cnn_model.pth"))
+    simpleModel.model.load_state_dict(torch.load(SIMPLE_CNN_PATH))
     simpleModel.testModel(test_loader)
     print(f"--- Relatório Final (Modelo Simples) ---")
     print(f"Acurácia (Accuracy):   {simpleModel.acc*100:.2f}%")
@@ -85,7 +87,7 @@ def mainPipeline(device, db_path):
     print(f"Sensibilidade (Recall):{simpleModel.rec*100:.2f}%")
     print(f"F1 Score:              {simpleModel.f1*100:.2f}%")
 
-    completeModel.model.load_state_dict(torch.load("models/best_complete_cnn_model.pth"))
+    completeModel.model.load_state_dict(torch.load(COMPLEX_CNN_PATH))
     completeModel.testModel(test_loader)
     print(f"--- Relatório Final (Modelo Completo) ---")
     print(f"Acurácia (Accuracy):   {completeModel.acc*100:.2f}%")
@@ -107,5 +109,10 @@ def mainPipeline(device, db_path):
         "assets/Complete_CNN_ConfusionMatrix.png"
     )
 
+def predictionPipeline(device, db_path):
+    pass
+
 if __name__ == "__main__":
-    mainPipeline(DEVICE, PATH)
+    os.makedirs("src/models", exist_ok=True)
+    os.makedirs("assets", exist_ok=True)
+    predictionPipeline(DEVICE, PATH)
