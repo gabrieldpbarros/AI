@@ -10,8 +10,6 @@ DEVICE = "cuda"
 DB_PATH = "db/"
 MODELS_PATH = "src/models"
 CONFIG_PATH = os.path.join(MODELS_PATH, "topology.yaml")
-SIMPLE_CNN_PATH = os.path.join(MODELS_PATH, "best_simple_cnn_model.pth")
-COMPLEX_CNN_PATH = os.path.join(MODELS_PATH, "best_complete_cnn_model.pth")
 
 def load_configs(config_path: str):
     with open(config_path) as f:
@@ -93,7 +91,7 @@ def trainingPipeline(device, db_path, configs):
         "assets/Complete_CNN_Losses.png"
     )
 
-    simpleModel.model.load_state_dict(torch.load(SIMPLE_CNN_PATH))
+    simpleModel.model.load_state_dict(torch.load(simple_configs['best_model_path']))
     simpleModel.testModel(test_loader)
     print(f"--- Relatório Final (Modelo Simples) ---")
     print(f"Acurácia (Accuracy):   {simpleModel.acc*100:.2f}%")
@@ -101,7 +99,7 @@ def trainingPipeline(device, db_path, configs):
     print(f"Sensibilidade (Recall):{simpleModel.rec*100:.2f}%")
     print(f"F1 Score:              {simpleModel.f1*100:.2f}%")
 
-    completeModel.model.load_state_dict(torch.load(COMPLEX_CNN_PATH))
+    completeModel.model.load_state_dict(torch.load(complete_configs['best_model_path']))
     completeModel.testModel(test_loader)
     print(f"--- Relatório Final (Modelo Completo) ---")
     print(f"Acurácia (Accuracy):   {completeModel.acc*100:.2f}%")
@@ -124,8 +122,31 @@ def trainingPipeline(device, db_path, configs):
     )
 
 def predictionPipeline(device, db_path, model_path):
+    from final_project.src.utils.load_data import getSampleData
 
-    pass
+    simple_configs = configs['simple_cnn']
+    complete_configs = configs['complex_cnn']
+    
+    simpleModel = cnnModel(
+        device=device,
+        filters_list=simple_configs['filters_list'],
+        dropout=simple_configs['dropout'],
+        batch_norm=simple_configs['batch_norm'],
+        GAP=simple_configs['GAP'],
+        best_model_path=simple_configs['best_model_path']
+    )
+
+    completeModel = cnnModel(
+        device=device,
+        filters_list=complete_configs['filters_list'],
+        dropout=complete_configs['dropout'],
+        batch_norm=complete_configs['batch_norm'],
+        GAP=complete_configs['GAP'],
+        best_model_path=complete_configs['best_model_path']
+    )
+
+    simpleModel.model.load_state_dict(torch.load(simple_configs['best_model_path']))
+    completeModel.model.load_state_dict(torch.load(complete_configs['best_model_path']))
 
 if __name__ == "__main__":
     os.makedirs("src/models", exist_ok=True)
