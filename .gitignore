@@ -3,3 +3,11 @@ __pycache__/
 .git
 *.yaml
 *.zip
+!final_project/db/
+final_project/db/*
+!final_project/db/chest_xray/
+final_project/db/chest_xray/*
+!final_project/db/chest_xray/test/
+final_project/db/chest_xray/test/*
+!final_project/db/chest_xray/test/.gitkeep
+!final_project/src/models/*.yaml

@@ -75,7 +75,7 @@ def _find_dir(root_path: str) -> str:
     print(f"Dataset localizado em: {final_dir}")
     return final_dir
 
-def _createDataFrame(root_dir: str):
+def _createDataFrame(root_dir: str, train: bool):
     """
     Varre as pastas train/test/val e cria um DataFrame único com caminhos e labels.
 
@@ -85,6 +85,7 @@ def _createDataFrame(root_dir: str):
 
     Args:
         root_dir: Diretório raiz que contém as três pastas (train, test e val)
+        train: Booleano que indica qual tipo de carregamento deve ser feito
     """
     filepaths = []
     labels = []
@@ -92,20 +93,33 @@ def _createDataFrame(root_dir: str):
     # As classes são as subpastas
     classes = ["NORMAL", "PNEUMONIA"]
     
-    # Percorre train, test e val para juntar todas em um único DataFrame
-    for split in ["train", "test", "val"]:
-        split_path = os.path.join(root_dir, split)
-        if not os.path.exists(split_path): continue
-            
-        for label in classes:
-            class_path = os.path.join(split_path, label)
-            if not os.path.exists(class_path): continue
+    if train:
+        # Percorre train, test e val para juntar todas em um único DataFrame
+        for split in ["train", "test", "val"]:
+            split_path = os.path.join(root_dir, split)
+            if not os.path.exists(split_path): continue
                 
-            for img_name in os.listdir(class_path):
-                if img_name.lower().endswith(('.jpeg', '.jpg', '.png')):
-                    full_path = os.path.join(class_path, img_name)
-                    filepaths.append(full_path)
-                    labels.append(label)
+            for label in classes:
+                class_path = os.path.join(split_path, label)
+                if not os.path.exists(class_path): continue
+                    
+                for img_name in os.listdir(class_path):
+                    if img_name.lower().endswith(('.jpeg', '.jpg', '.png')):
+                        full_path = os.path.join(class_path, img_name)
+                        filepaths.append(full_path)
+                        labels.append(label)
+    else:
+        test_path = os.path.join(root_dir, "test")
+        if not os.path.exists(test_path): raise FileNotFoundError(f"ERRO: Não existe dados de treino em {test_path}")
+        for label in classes:
+                class_path = os.path.join(test_path, label)
+                if not os.path.exists(class_path): continue
+                    
+                for img_name in os.listdir(class_path):
+                    if img_name.lower().endswith(('.jpeg', '.jpg', '.png')):
+                        full_path = os.path.join(class_path, img_name)
+                        filepaths.append(full_path)
+                        labels.append(label)
                     
     df = pd.DataFrame({
         'path': filepaths,
@@ -113,7 +127,7 @@ def _createDataFrame(root_dir: str):
     })
     return df
 
-def _setTransformations() -> Tuple[callable, callable]:
+def _setTrainTransformations() -> callable:
     """
     Função auxiliar que contém as definições das transformações aplicadas nas
     imagens do dataset.
@@ -139,14 +153,15 @@ def _setTransformations() -> Tuple[callable, callable]:
         transforms.ToTensor(),
         # transforms.Normalize([0.5], [0.5])
     ])
+    return train_transforms
 
-    val_test_transform = transforms.Compose([
+def _setTestTransformations() -> callable:
+    test_transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.Grayscale(num_output_channels=1),
         transforms.ToTensor(),
     ])
-
-    return train_transforms, val_test_transform
+    return test_transform
 
 def getTrainingDataLoaders(
         root_path: str,
@@ -167,7 +182,7 @@ def getTrainingDataLoaders(
     # --- 1. Carregamento do DataFrame ---
     # Correção do PATH
     path = _find_dir(root_path)
-    full_df = _createDataFrame(path)
+    full_df = _createDataFrame(path, train=True)
 
     # --- 2. Separação dos subconjuntos ---
     train_df, temp = train_test_split(
@@ -185,7 +200,8 @@ def getTrainingDataLoaders(
     )
 
     # --- 3. Definição das transformações ---
-    train_transforms, val_test_transforms = _setTransformations()
+    train_transforms, val_test_transforms = _setTrainTransformations()
+    val_test_transforms = _setTestTransformations()
 
     # --- 4. Instanciação dos DataSets e DataLoaders ---
     train_ds = CustomImgDataset(train_df, train_transforms)
@@ -213,6 +229,22 @@ def getTrainingDataLoaders(
     )
 
     return train_loader, val_loader, test_loader
+
+def getSampleData(
+        root_path: str,
+        batch_size: int = 32
+):
+    path = _find_dir(root_path)
+    full_df = _createDataFrame(path, train=False)
+    transforms = _setTestTransformations()
+    test_ds = CustomImgDataset(full_df, transform=transforms)
+    test_loader = DataLoader(
+        test_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=4
+    )
+    return test_loader
 
 if __name__ == "__main__":
     # 1. Descobre onde este script (data_loader.py) está
