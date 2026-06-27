@@ -3,13 +3,14 @@ import torch
 import yaml
 
 from torch import nn
-from final_project.src.models.simple_cnn import cnnModel
+from src.models.simple_cnn import cnnModel
 
 EPOCHS = 30
 DEVICE = "cuda"
 DB_PATH = "db/"
 MODELS_PATH = "src/models"
 CONFIG_PATH = os.path.join(MODELS_PATH, "topology.yaml")
+IMG_RESIZE = (224,224)
 
 def load_configs(config_path: str):
     with open(config_path) as f:
@@ -17,7 +18,7 @@ def load_configs(config_path: str):
     return config
 
 def trainingPipeline(device, db_path, configs):
-    from final_project.src.utils.load_data import getTrainingDataLoaders
+    from src.utils.load_data import getTrainingDataLoaders
     train_loader, val_loader, test_loader = getTrainingDataLoaders(db_path)
 
     simple_configs = configs['simple_cnn']
@@ -70,7 +71,7 @@ def trainingPipeline(device, db_path, configs):
             print(f"Epoch {epoch+1}/{EPOCHS} | Simple Train Loss: {simpleModel.train_loss[epoch]:.4f} | Simple Val Loss: {simpleModel.val_loss[epoch]:.4f}")
             print(f"Epoch {epoch+1}/{EPOCHS} | Complete Train Loss: {completeModel.train_loss[epoch]:.4f} | Complete Val Loss: {completeModel.val_loss[epoch]:.4f}")
 
-    from final_project.src.utils.view_loss import plotLosses, plotCMatrix
+    from src.utils.view_loss import plotLosses, plotCMatrix
     plotLosses(
         "Modelo Simples",
         simpleModel.train_loss,
@@ -121,12 +122,18 @@ def trainingPipeline(device, db_path, configs):
         "assets/Complete_CNN_ConfusionMatrix.png"
     )
 
-def predictionPipeline(device, db_path, model_path):
-    from final_project.src.utils.load_data import getSampleData
+def predictionPipeline(device, db_path, configs):
+    from src.utils.load_data import getSampleData
+    from src.utils.show_data import overlayGradCAM, showGradMap
+    from src.utils.grad_cam import GradCAM
+    from src.core.entities import NetworkOutput
+
+    data_loader = getSampleData(db_path, batch_size=32)
+    data_iter = iter(data_loader)
+    image, label = next(data_iter)
+    image_tensor = image[0:1]
 
     simple_configs = configs['simple_cnn']
-    complete_configs = configs['complex_cnn']
-    
     simpleModel = cnnModel(
         device=device,
         filters_list=simple_configs['filters_list'],
@@ -135,7 +142,13 @@ def predictionPipeline(device, db_path, model_path):
         GAP=simple_configs['GAP'],
         best_model_path=simple_configs['best_model_path']
     )
+    simpleModel.model.load_state_dict(torch.load(simple_configs['best_model_path']))
+    simple_output: NetworkOutput = simpleModel.passInput(data_loader)
+    simple_cam = GradCAM(simple_output, IMG_RESIZE)
+    cam_map = overlayGradCAM(image_tensor , simple_cam.computeGradCAM())
+    showGradMap(cam_map, 'MODELO SIMPLES')
 
+    complete_configs = configs['complex_cnn']
     completeModel = cnnModel(
         device=device,
         filters_list=complete_configs['filters_list'],
@@ -144,12 +157,14 @@ def predictionPipeline(device, db_path, model_path):
         GAP=complete_configs['GAP'],
         best_model_path=complete_configs['best_model_path']
     )
-
-    simpleModel.model.load_state_dict(torch.load(simple_configs['best_model_path']))
     completeModel.model.load_state_dict(torch.load(complete_configs['best_model_path']))
+    complete_output: NetworkOutput = completeModel.passInput(data_loader)
+    complete_cam = GradCAM(complete_output, IMG_RESIZE)
+    cam_map = complete_cam.computeGradCAM()
+    showGradMap(cam_map, 'MODELO COMPLEXO')
 
 if __name__ == "__main__":
     os.makedirs("src/models", exist_ok=True)
     os.makedirs("assets", exist_ok=True)
-    configs = load_configs()
-    predictionPipeline(DEVICE, DB_PATH)
+    configs = load_configs(CONFIG_PATH)
+    predictionPipeline(DEVICE, DB_PATH, configs)

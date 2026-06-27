@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from core.entities import NetworkOutput
+from src.core.entities import NetworkOutput
 from torch.utils.data import DataLoader
 from typing import List
 from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
@@ -264,6 +264,7 @@ class cnnModel():
         results: list[NetworkOutput] = []
         activation_maps: torch.Tensor = None
         weights: torch.Tensor = None
+        self.predicted_class = []
 
         def saveActivationMaps(module, inp, out):
             nonlocal activation_maps
@@ -286,7 +287,7 @@ class cnnModel():
                         _, predicted = torch.max(output.data, 1)
                         self.model.zero_grad()
                         output[0, predicted.item()].backward()
-                        self.network_output.extend(predicted.cpu().numpy())
+                        self.predicted_class.extend(predicted.cpu().numpy())
                     results.append(
                         NetworkOutput(
                             predicted_class=predicted.item(),
