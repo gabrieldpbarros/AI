@@ -6,5 +6,10 @@ matplotlib
 notebook
 numpy
 nvidia-cudnn-cu12
+pandas
 scikit-learn
 tqdm
+opencv-python       # filtros, transformacoes e segmentacao
+scikit-image        # segmentacao avancada
+pillow              # IO de imagens e operacoes basicas
+albumentations      # augmentacao para ML

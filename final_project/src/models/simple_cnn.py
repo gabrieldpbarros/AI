@@ -90,12 +90,7 @@ class cnnModel():
     def __init__(
             self,
             device: str,
-            filters_list: List[int],
-            num_classes: int = 2,
-            dropout: bool = False,
-            batch_norm: bool = False,
-            GAP: bool = False,
-            input_size: int = 224,
+            model: nn.Module,
             best_model_path: str = "models/base_best_cnn.pth"
     ):
         """
@@ -111,37 +106,26 @@ class cnnModel():
             best_model_path: Diretório de armazenamento do modelo 
         """
         self.device = device
-
-        self.model = SimpleCNN_Base(
-            filters_list,
-            num_classes=num_classes,
-            dropout=dropout,
-            batch_norm=batch_norm,
-            GAP=GAP,
-            input_size=input_size
-        )
-
+        self.model = model
         self.model.to(self.device)
 
         self.train_loss = []
         self.val_loss = []
         self.test_class = []
         self.predicted_class = []
-
         self.best_model_path = best_model_path
 
     def _getLastConv(self) -> nn.Conv2d:
         last_conv = None
-        for layer in self.model.conv_layers:
-            if isinstance(layer, nn.Conv2d):
-                last_conv = layer
-        
-        if last_conv is None:
-            raise ValueError(
-                "Nenhum nn.Conv2d encontrado em self.model.conv_layers. "
-                "Verifique se filters_list foi passada corretamente."
-            )
-        return layer
+        if hasattr(self.model, 'layer4'): 
+            return self.model.layer4[-1]
+            
+        elif hasattr(self.model, 'conv_layers'):
+            for layer in self.model.conv_layers:
+                if isinstance(layer, nn.Conv2d):
+                    last_conv = layer
+            if last_conv is not None:
+                return last_conv
 
     def trainModel(
             self,
@@ -161,7 +145,7 @@ class cnnModel():
         self.model.train()
         total_loss = 0.0
         for features, labels in train_loader:
-            features = features.to(self.device)
+            features = features.to(self.device).float()
             labels = labels.to(self.device) # Labels já são int (long) do Dataset
 
             optimizer.zero_grad()
@@ -199,7 +183,7 @@ class cnnModel():
 
         with torch.no_grad():
             for features, labels in val_loader:
-                features = features.to(self.device)
+                features = features.to(self.device).float()
                 labels = labels.to(self.device)
 
                 outputs = self.model(features)
@@ -228,7 +212,7 @@ class cnnModel():
 
         with torch.no_grad():
             for features, labels in test_loader:
-                features = features.to(self.device)
+                features = features.to(self.device).float()
                 labels = labels.to(self.device)
 
                 outputs = self.model(features)
@@ -251,7 +235,7 @@ class cnnModel():
     def passInput(
             self,
             data_input: DataLoader
-    ) -> dict:
+    ) -> list[NetworkOutput]:
         """
         Função de entrada de dados pelo modelo.
 
@@ -279,20 +263,20 @@ class cnnModel():
 
         try:
             for batch in data_input:
-                features = batch[0].to(self.device)
+                features = batch[0].to(self.device).float()
                 for i in range(features.size(0)):
                     image = features[i:i+1]
                     with torch.enable_grad():
                         output = self.model(image)
                         _, predicted = torch.max(output.data, 1)
-                        self.model.zero_grad()
+                        self.model.zero_grad(set_to_none=True)
                         output[0, predicted.item()].backward()
                         self.predicted_class.extend(predicted.cpu().numpy())
                     results.append(
                         NetworkOutput(
                             predicted_class=predicted.item(),
-                            activation_map=activation_maps.squeeze(0),
-                            gradient=weights.squeeze(0)
+                            activation_map=activation_maps.squeeze(0).cpu(),
+                            gradient=weights.squeeze(0).cpu()
                         )
                     )
         finally:
